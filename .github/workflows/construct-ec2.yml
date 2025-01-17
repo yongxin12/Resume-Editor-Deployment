@@ -39,12 +39,12 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve
-        
-      - name: Extract Terraform Output
+      
+        - name: Extract Terraform Output
         id: get_output
         run: |
           instance_public_ip=$(terraform output -raw instance_public_ip)
-          echo -e "instance_public_ip=${instance_public_ip}\n" >> $GITHUB_ENV
+          echo "{instance_public_ip}=${instance_public_ip}" >> $GITHUB_ENV
 
       - name: Use Terraform Output
         run: echo "The public IP of the instance is ${{ env.instance_public_ip }}"
