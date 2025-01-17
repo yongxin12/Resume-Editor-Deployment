@@ -24,7 +24,23 @@ resource "aws_security_group" "allow_ssh" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]  
   }
+    # Add rule for HTTP traffic on port 3000
+  ingress {
+    description = "HTTP on port 3001"
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  
+  }
 
+  # Add rule for HTTP traffic on port 3000
+  ingress {
+    description = "HTTP on port 5000"
+    from_port   = 5000 
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  
+  }
   # Add rule for HTTP traffic on port 3000
   ingress {
     description = "HTTP on port 5001"
