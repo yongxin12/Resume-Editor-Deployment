@@ -41,5 +41,7 @@ jobs:
         run: terraform apply -auto-approve
 
       - name: Save Terraform Outputs
-        run: |
-          echo "EC2_PUBLIC_IP=$(terraform output -raw instance_public_ip)" >> $GITHUB_ENV
+        run: terraform output -raw instance_public_ip > ec2_ip.txt
+      
+      - name: Set GitHub Environment Variable
+        run: echo "EC2_PUBLIC_IP=$(cat ec2_ip.txt)" >> $GITHUB_ENV
