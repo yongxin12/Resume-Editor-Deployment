@@ -1,7 +1,7 @@
 # Local .terraform directories
 **/.terraform/*
 id_rsa
-id_rsa.pub
+.secrets
 # .tfstate files
 *.tfstate
 *.tfstate.*
