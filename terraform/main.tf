@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket = "resume-editor-terraform-state-bucket"
+    key    = "state/resume-modifier-ec2-state.tfstate"
+    region = "us-east-2"
+  }
+}
+
 # Provider configuration
 provider "aws" {
   region = "us-east-2"  
