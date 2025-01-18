@@ -43,7 +43,7 @@ jobs:
       - name: Extract Terraform Output
         id: get_output
         run: |
-          PUBLIC_IP=$(terraform output instance_public_ip)
+          PUBLIC_IP=$(terraform output instance_public_ip | tr -d '"')
           echo "PUBLIC_IP=${PUBLIC_IP}" >> $GITHUB_ENV
 
       - name: Use Terraform Output
