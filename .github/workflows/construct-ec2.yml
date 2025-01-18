@@ -42,11 +42,17 @@ jobs:
       
       - name: Get EC2 IP
         run: 
-          PUBLIC_IP=$(terraform output -raw instance_public_ip)
+          terraform output -raw instance_public_ip > ip.txt
+  
+  build-image:
+    name: AWS ECR preparation
+    needs: terraform
+    runs-on: ubuntu-latest
 
-      - name: Set EC2 IP
-        run:
-          echo "PUBLIC_IP=${PUBLIC_IP}" >> $GITHUB_ENV
+    steps:
+      - name: Trigger Deploy to AWS ECR
+        uses: BushLay/resume-modifier-frontend/.github/workflows/push_to_ecr.yml@main
+        with: 
+          VITE_SERVER_HOST: "http://$(cat ip.txt)"
 
-      - name: Print IP
-        run: echo "The public IP of the instance is ${{ env.PUBLIC_IP }}"
+      
