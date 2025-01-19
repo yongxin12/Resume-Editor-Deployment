@@ -27,9 +27,17 @@ jobs:
       run: |
         aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com"
 
-    - name: Deploy to EC2 via SSH
+    - name: Create Private Key File
       run: |
-        scp -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ./ec2_update.sh ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
+        # Save the private key to a file
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
+        # Set strict permissions for the private key
+        chmod 600 private_key.pem
+    
+    - name: Transfer Files to EC2
+      run: |
+        # Use SCP to copy the script to the EC2 instance
+        scp -o StrictHostKeyChecking=no -i private_key.pem ./ec2_update.sh ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
     
     - name: Run Deploy Script on EC2
       run: |
