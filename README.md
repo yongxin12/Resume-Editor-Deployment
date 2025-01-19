@@ -1,77 +1,170 @@
 # Resume-Editor-Deployment
 # Cloud Deployment Setup Documentation
 
-## Prerequisites
-* [Set up an Amazon AWS account](https://aws.amazon.com/)
-* Create [ECR repositories](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html) for both backend and frontend
-* Clone the following repositories into your local machine:
-   ```
-   git clone https://github.com/turingplanet/unified-api-docker.git
-   git clone https://github.com/turingplanet/react-frontend-docker.git
-   git clone https://github.com/turingplanet/cloud-deployment.git
-   ```
-* [Install Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+1) aws ecr create-repository --repository-name resume_modifier_market_backend --region us-east-2 #创建repo
+2) aws, terraform, docker installl
+3) aws register, create a user
+4) create access key for the user
+5) aws cli set up
+6) cd terraform | ssh-keygen -t rsa -b 2048 -f ./id_rsa
+7) terraform init | terraform apply
+8) ssh -i id_rsa ec2-user@<your_ec2_ip_address>
+9)  touch build.sh | vim build.sh | chmod +x build.sh | ./build.sh
 
-## Set up EC2 Instance
-1.  Generate an SSH key pair under [the terraform folder path](https://github.com/turingplanet/cloud-deployment/tree/main/terraform) by running:
-    ```
-    ssh-keygen -t rsa -b 2048 -f ./id_rsa
-    ```
+The following demonstrates the sequence diagram for the frontend
 
-2.  Navigate to [the terraform directory](https://github.com/turingplanet/cloud-deployment/tree/main/terraform) and run the following commands:
-    ```
-    terraform init
-    terraform apply
-    ```
-    This will initialize the Terraform working directory and then create or update your infrastructure, including deploying your EC2 instance.
+```mermaid
+flowchart TD
+    
+    E[infrastructure repo] --> |manually|F{github action} --> |apply| G[terraform] --> |construct|I[EC2]
+    G --> |store state| H[S3]
+    G --> |set| J[ssh key pair]
+    G --> |set| K[security groups]
 
-3. Once the EC2 instance is launched, SSH into it:
-   ```
-   ssh -i id_rsa ec2-user@<your_ec2_ip_address>
-   ```
+    F --> |trigger| B
 
-4. Copy the content of [ec2_build.sh](https://github.com/turingplanet/cloud-deployment/blob/main/script/ec2_build.sh) to your EC2 instance and edit it to configure AWS and install Docker. Remember to replace the placeholder [AWS_ACCESS_KEY_ID](https://github.com/turingplanet/cloud-deployment/blob/main/script/ec2_build.sh#L4) and [AWS_SECRET_ACCESS_KEY](https://github.com/turingplanet/cloud-deployment/blob/main/script/ec2_build.sh#L5) with your own [credentials](https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html) in the script. Then execute the script.
-    ```
-    chmod +x ec2_build.sh
-    ./ec2_build.sh
-    ```
+    A[service repo] --> |push| B{github action} 
+    A[service repo] --> |manually| B{github action} 
+    
+    B --> |dockerize| C[docker image]
+    B{github action} --> |push built image| D[ECR]
 
-5. Set up Docker Compose by running:
-   ```
-   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
-   ```
+    B --> |trigger| L{github action} --> |execute| M[bash script on EC2]
+    M --> |update/run| N[service]
 
-## Backend API Deployment
-1. In the [build_and_push.sh](https://github.com/turingplanet/unified-api-docker/blob/main/build_and_push.sh) file, replace [AWS_REGION](https://github.com/turingplanet/unified-api-docker/blob/main/build_and_push.sh#L4), [AWS_ACCOUNT_ID](https://github.com/turingplanet/unified-api-docker/blob/main/build_and_push.sh#L5), and [ECR_REPOSITORY](https://github.com/turingplanet/unified-api-docker/blob/main/build_and_push.sh#L6) with your correct AWS settings.
 
-2. Run [build_and_push.sh](https://github.com/turingplanet/unified-api-docker/blob/main/build_and_push.sh) locally to build the Docker image and push it to ECR. Before running the script, update [the secret.yml](https://github.com/turingplanet/unified-api-docker/blob/main/secret.yml) file with your OpenAI API key.
+```
 
-3. Create a docker-compose.yml file in EC2 and copy the content from [ec2-docker-compose.yml](https://github.com/turingplanet/unified-api-docker/blob/main/ec2-docker-compose.yml). Remember to replace the OPENAI_API_KEY value with your own OpenAI API key and update the [image name](https://github.com/turingplanet/unified-api-docker/blob/main/ec2-docker-compose.yml#L16) to use your correct AWS account ID and ECR repository.
+### some useful commands
 
-4. Pull your backend ECR repository and run Docker Compose:
-   ```
-   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your_aws_account_id>.dkr.ecr.us-east-1.amazonaws.com
-   docker-compose up --pull always -d
-   ```
+running docker container:
 
-5. Run [the upload_db_data.sh](https://github.com/turingplanet/cloud-deployment/blob/main/script/upload_db_data.sh) script locally to upload your MongoDB data to the EC2 instance. 
-    * Replace [IP_ADDRESS](https://github.com/turingplanet/cloud-deployment/blob/main/script/upload_db_data.sh#L4) with the public IP address of your EC2 instance.
-    * Replace [LOCAL_DUMP_PATH](https://github.com/turingplanet/cloud-deployment/blob/main/script/upload_db_data.sh#L10) with the full path to your local MongoDB dump directory.
+```bash
+docker run -d --name market-frontend -p 3000:80 376129840507.dkr.ecr.us-east-2.amazonaws.com/market-frontend:latest
+```
 
-6. Test your API by accessing `http://<ec2_ip_address>:5001/api/news_sentiment?symbol=TSLA&sort_field=time_published&sort_order=desc` in your browser.
+aws ecr create-repository --repository-name editor-frontend --region us-east-2
 
-## Frontend Setup
 
-1. Replace [API_BASE_URL](https://github.com/turingplanet/react-frontend-docker/blob/main/src/components/utils/config.js#L1) in [config.js](https://github.com/turingplanet/react-frontend-docker/blob/main/src/components/utils/config.js#L1) with your EC2 instance's public IP address.
+aws logs create-log-group --log-group-name "/ecs/market_backend" --region us-east-2
 
-2. Build the frontend Docker image and push it to ECR locally using the [build_and_push.sh script](https://github.com/turingplanet/react-frontend-docker/blob/main/build_and_push.sh). Remember to replace AWS_REGION, AWS_ACCOUNT_ID, and ECR_REPOSITORY with your correct AWS settings in the script before running it.
 
-3. Pull and run your frontend image from ECR:
-   ```
-   docker pull <your_aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/stock_platform_react_frontend:latest
-   docker run -d -p 3000:3000 <your_aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/stock_platform_react_frontend:latest
-   ```
+aws ecs execute-command \
+  --cluster resume-editor \
+  --task 99cc508bd4304181922816cb6f99e60a \
+  --container market-frontend \
+  --interactive \
+  --command "/bin/bash"
 
-4. Access your website by navigating to `http://<ec2_ip_address>:3000` in your browser.
+
+aws ecs update-service \
+  --cluster resume-editor \
+  --service market-frontend \
+  --enable-execute-command
+
+
+
+  aws ecs update-service \
+  --cluster resume-editor \
+  --service market-frontend \
+  --task-definition market_frontend_family:32 \
+  --enable-execute-command
+
+
+
+
+
+
+
+# how to use act 
+
+need docker installed
+
+# set up
+Install via the binary release:
+
+Download the latest release from GitHub:
+```bash
+wget https://github.com/nektos/act/releases/download/v0.2.71/act_Linux_x86_64.tar.gz
+
+```
+Extract and move it to /usr/local/bin:
+```bash
+tar -xzf act_Linux_x86_64.tar.gz
+sudo mv act /usr/local/bin
+```
+
+Test the installation:
+```bash
+act --version
+```
+
+# how to use
+
+
+```bash
+cd your_github_repo
+```
+
+Ensure the Workflow Files Are in the Correct Directory
+GitHub Actions workflows must be located in .github/workflows at the root of your repository. Verify your project structure is as follows:
+
+```project/
+  ├── .github/
+  │   └── workflows/
+  │       ├── push_to_ecr.yml
+  │       └── job_market_parser.yml
+  ├── Dockerfile.server
+  └── other_project_files
+```
+
+Ensure that the .secrets file contains valid key-value pairs for the secrets used in your workflow. For example:
+
+```plaintext
+AWS_ACCOUNT_ID=your_aws_account_id
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+```
+
+```bash
+touch .secrets
+act --secret-file .secrets
+```
+
+or
+
+If you don’t want to use a .secrets file, you can pass secrets directly via the command line. For example:
+
+```bash
+act -s AWS_ACCOUNT_ID=your_aws_account_id -s AWS_ACCESS_KEY_ID=your_aws_access_key_id
+```
+By default, act runs the push event. To test a specific workflow file (e.g., push_to_ecr.yml):
+
+```bash
+act -W push_to_ecr.yml
+```
+
+To specify an event (e.g., push):
+```bash
+act push
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
