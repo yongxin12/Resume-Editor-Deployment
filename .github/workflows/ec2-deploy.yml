@@ -5,6 +5,7 @@ on:
 # Define environment variables  
 env:  
   AWS_REGION: us-east-2
+  UPDATE_SCRIPT: .github/workflows/ec2_update.sh
 
 
 jobs:
@@ -37,7 +38,7 @@ jobs:
     - name: Transfer Files to EC2
       run: |
         # Use SCP to copy the script to the EC2 instance
-        scp -o StrictHostKeyChecking=no -i private_key.pem ./ec2_update.sh ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
+        scp -o StrictHostKeyChecking=no -i private_key.pem ${{ env.UPDATE_SCRIPT }} ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
     
     - name: Run Deploy Script on EC2
       run: |
