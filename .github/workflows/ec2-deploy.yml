@@ -31,14 +31,14 @@ jobs:
     - name: Create Private Key File
       run: |
         # Save the private key to a file
-        echo "${{ secrets.EC2_PRIVATE_KEY }}" > private_key.pem
+        echo "${{ secrets.EC2_PRIVATE_KEY }}" > id_rsa
         # Set strict permissions for the private key
-        chmod 600 private_key.pem
+        chmod 600 id_rsa
     
     - name: Transfer Files to EC2
       run: |
         # Use SCP to copy the script to the EC2 instance
-        scp -o StrictHostKeyChecking=no -i private_key.pem ${{ env.UPDATE_SCRIPT }} ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
+        scp -o StrictHostKeyChecking=no -i id_rsa ${{ env.UPDATE_SCRIPT }} ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
     
     - name: Run Deploy Script on EC2
       run: |
