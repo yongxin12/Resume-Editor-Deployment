@@ -1,0 +1,45 @@
+name: Deploy on EC2
+
+on:
+  repository_dispatch:
+    types:
+      - deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up Terraform
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.10.4
+
+    # Initialize Terraform
+    - name: Terraform Init
+      working-directory: ./terraform
+      run: terraform init
+
+    # Apply Terraform with Task Definitions
+    - name: Apply Terraform
+      env:
+        TF_VAR_task_definitions: |
+          [
+            {
+              "name": "${{ github.event.client_payload.name }}",
+              "family": "${{ github.event.client_payload.family }}",
+              "image_url": "${{ github.event.client_payload.image_url }}",
+              "container_port": ${{ github.event.client_payload.container_port }},
+              "host_port": ${{ github.event.client_payload.host_port }},
+              "cpu": ${{ github.event.client_payload.cpu }},
+              "memory": ${{ github.event.client_payload.memory }},
+              "awslogs_group": "${{ github.event.client_payload.awslogs_group }}"
+            }
+          ]
+      run: |
+        terraform apply -auto-approve

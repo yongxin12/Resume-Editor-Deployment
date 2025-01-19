@@ -1,0 +1,40 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch:
+# Define environment variables  
+env:  
+  AWS_REGION: us-east-2
+
+
+jobs:
+  deploy:
+    name: Deploy Docker Images to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Authenticate Docker with AWS ECR
+      run: |
+        aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com"
+
+    - name: Deploy to EC2 via SSH
+      run: |
+        scp -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ./ec2_update.sh ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
+    
+    - name: Run Deploy Script on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ec2-user@18.191.233.138 << 'EOF'
+          export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          chmod +x /home/ec2-user/deploy.sh
+          /home/ec2-user/deploy.sh
+        EOF

@@ -47,12 +47,8 @@ jobs:
   build-image:
     name: AWS ECR preparation
     needs: terraform
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Trigger Deploy to AWS ECR
-        uses: BushLay/resume-modifier-frontend/.github/workflows/push_to_ecr.yml@main
-        with: 
-          VITE_SERVER_HOST: "http://$(cat ip.txt)"
+    uses: BushLay/resume-modifier-frontend/.github/workflows/push_to_ecr.yml@main
+    with: 
+      VITE_SERVER_HOST: "http://$(cat ip.txt)"
 
       
