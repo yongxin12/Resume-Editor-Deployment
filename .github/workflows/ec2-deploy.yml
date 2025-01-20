@@ -28,7 +28,7 @@ jobs:
       run: |
         which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )
         eval $(ssh-agent -s)
-        echo "$AWS_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' | ssh-add -
         mkdir -p ~/.ssh
         touch ~/.ssh/config
         touch ~/.ssh/known_hosts
