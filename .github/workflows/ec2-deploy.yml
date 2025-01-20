@@ -28,12 +28,13 @@ jobs:
       run: |
         which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )
         eval $(ssh-agent -s)
-        echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' | ssh-add -
+        echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' > ~/.ssh/id_ed
         mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/id_ed
+        ssh-add ~/.ssh/id_ed
         touch ~/.ssh/config
         touch ~/.ssh/known_hosts
-        chmod 644 ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
         ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
     
     - name: Transfer Files to EC2
