@@ -30,9 +30,10 @@ jobs:
         eval $(ssh-agent -s)
         echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' | ssh-add -
         mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
         touch ~/.ssh/config
         touch ~/.ssh/known_hosts
-        chmod -R 400 ~/.ssh
+        chmod 644 ~/.ssh/known_hosts
         ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
     
     - name: Transfer Files to EC2
