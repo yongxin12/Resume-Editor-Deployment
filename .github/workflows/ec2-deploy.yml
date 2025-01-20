@@ -26,7 +26,7 @@ jobs:
 
     - name: Create Private Key File
       run: |
-        'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+        which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )
         eval $(ssh-agent -s)
         echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
         mkdir -p ~/.ssh
