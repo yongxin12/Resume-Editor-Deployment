@@ -37,14 +37,12 @@ jobs:
         chmod 600 ~/.ssh/known_hosts
         ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
         scp -o StrictHostKeyChecking=no -r ${{ env.UPDATE_SCRIPT }} ec2-user@3.138.124.182:/home/ec2-user/
-    
-        
-    
-    - name: Run Deploy Script on EC2
-      run: |
         ssh -o StrictHostKeyChecking=no ec2-user@3.138.124.182 << 'EOF'
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           chmod +x /home/ec2-user/ec2_update.sh
           /home/ec2-user/ec2_update.sh
         EOF
+        
+  
+        
           
