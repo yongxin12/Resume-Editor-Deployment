@@ -36,11 +36,9 @@ jobs:
         touch ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
         ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
-    
-    - name: Transfer Files to EC2
-      run: |
-        # Use SCP to copy the script to the EC2 instance
         scp -o StrictHostKeyChecking=no -r ${{ env.UPDATE_SCRIPT }} ec2-user@3.138.124.182:/home/ec2-user/
+    
+        
     
     - name: Run Deploy Script on EC2
       run: |
