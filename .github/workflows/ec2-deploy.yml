@@ -26,14 +26,14 @@ jobs:
 
     - name: Create Private Key File
       run: |
-        - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
-        - eval $(ssh-agent -s)
-        - echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
-        - mkdir -p ~/.ssh
-        - touch ~/.ssh/config
-        - touch ~/.ssh/known_hosts
-        - chmod -R 400 ~/.ssh
-        - ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
+        'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+        eval $(ssh-agent -s)
+        echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" | tr -d '\r' | ssh-add -
+        mkdir -p ~/.ssh
+        touch ~/.ssh/config
+        touch ~/.ssh/known_hosts
+        chmod -R 400 ~/.ssh
+        ssh-keyscan 3.138.124.182 >> ~/.ssh/known_hosts
     
     - name: Transfer Files to EC2
       run: |
