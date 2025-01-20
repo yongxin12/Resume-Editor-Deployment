@@ -28,8 +28,8 @@ jobs:
       run: |
         which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )
         eval $(ssh-agent -s)
-        echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' > ~/.ssh/id_ed
         mkdir -p ~/.ssh
+        echo "${{vars.AWS_SSH_PRIVATE_KEY}}" | tr -d '\r' > ~/.ssh/id_ed
         chmod 600 ~/.ssh/id_ed
         ssh-add ~/.ssh/id_ed
         touch ~/.ssh/config
