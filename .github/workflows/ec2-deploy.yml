@@ -24,26 +24,25 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Authenticate Docker with AWS ECR
-      run: |
-        aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com"
-
     - name: Create Private Key File
       run: |
         # Save the private key to a file
-        echo "${{ secrets.EC2_PRIVATE_KEY }}" > id_rsa
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed
         # Set strict permissions for the private key
-        chmod 600 id_rsa
+        chmod 600 ~/.ssh/id_ed
+        ssh-keyscan -H 18.191.233.138 >> ~/.ssh/known_hosts
     
     - name: Transfer Files to EC2
       run: |
         # Use SCP to copy the script to the EC2 instance
-        scp -o StrictHostKeyChecking=no -i id_rsa ${{ env.UPDATE_SCRIPT }} ec2-user@18.191.233.138:/home/ec2-user/ec2_update.sh
+        scp -o StrictHostKeyChecking=no -r ${{ env.UPDATE_SCRIPT }} ec2-user@18.191.233.138:/home/ec2-user/
     
     - name: Run Deploy Script on EC2
       run: |
-        ssh -o StrictHostKeyChecking=no -i ${{ secrets.AWS_SSH_PRIVATE_KEY }} ec2-user@18.191.233.138 << 'EOF'
+        ssh -o StrictHostKeyChecking=no ec2-user@18.191.233.138 << 'EOF'
           export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          chmod +x /home/ec2-user/deploy.sh
-          /home/ec2-user/deploy.sh
+          chmod +x /home/ec2-user/ec2_update.sh
+          /home/ec2-user/ec2_update.sh
         EOF
+          
