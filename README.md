@@ -1,7 +1,7 @@
 # Resume-Editor-Deployment
 # Cloud Deployment Setup Documentation
 
-1) aws ecr create-repository --repository-name resume_modifier_market_backend --region us-east-2 #创建repo
+1) aws ecr create-repository --repository-name resume_modifier_market_backend --region us-east-2
 2) aws, terraform, docker installl
 3) aws register, create a user
 4) create access key for the user

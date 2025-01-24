@@ -2,6 +2,10 @@
 
 AWS_DEFAULT_REGION="us-east-2"
 AWS_ACCOUNT_ID="376129840507"
+
+# Docker login
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+
 # Stop and remove containers
 docker stop editor-frontend editor-backend market-frontend market-backend
 docker rm editor-frontend editor-backend market-frontend market-backend
