@@ -13,7 +13,7 @@ terraform {
 # Create a VPC
 resource "aws_vpc" "production_vpc" {
   cidr_block = "10.0.0.0/16"
-  
+
   tags = {
     Name = "production-vpc"
   }
@@ -52,7 +52,7 @@ resource "aws_subnet" "public" {
   vpc_id            = aws_vpc.production_vpc.id
   cidr_block        = "10.0.${count.index}.0/24"
   availability_zone = data.aws_availability_zones.available.names[count.index]
-  
+
   tags = {
     Name = "public-subnet-${count.index}"
   }
@@ -94,6 +94,24 @@ resource "aws_security_group" "allow_web" {
     description = "Frontend port"
     from_port   = 3000
     to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow HTTP
+  ingress {
+    description = "Allow HTTP traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow HTTPS
+  ingress {
+    description = "Allow HTTPS traffic"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -144,7 +162,7 @@ output "ecs_task_execution_role_arn" {
 }
 
 
- # ECS cluster
+# ECS cluster
 
 # Create an ECS cluster
 resource "aws_ecs_cluster" "main" {
@@ -166,7 +184,7 @@ resource "aws_lb" "production_lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.allow_web.id]
-  subnets            = aws_subnet.public[*].id          # all subnet
+  subnets            = aws_subnet.public[*].id # all subnet
 
   enable_deletion_protection = false
 }
@@ -225,6 +243,84 @@ resource "aws_lb_listener" "frontend_lb_listener" {
   }
 }
 
+resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = aws_lb.production_lb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-2:376129840507:certificate/e8b7e4ad-0e4b-42f9-b170-87b979f547c3"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend_tg.arn
+  }
+}
+
+
+resource "aws_lb_listener" "http_redirect" {
+  load_balancer_arn = aws_lb.production_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+    redirect {
+      protocol    = "HTTPS"
+      port        = "443"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "backend_path_rule" {
+  listener_arn = aws_lb_listener.https_listener.arn
+  priority     = 100
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "frontend_path_rule" {
+  listener_arn = aws_lb_listener.https_listener.arn
+  priority     = 200
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend_tg.arn
+  }
+}
+
+
+## route 53
+resource "aws_route53_record" "main_domain" {
+  zone_id = "Z0885993Y0TRG27LPG1N"
+  name    = "aws.mintmelon.ca"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.production_lb.dns_name
+    zone_id                = aws_lb.production_lb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+
+
 
 output "frontend_target_group_arn" {
   value = aws_lb_target_group.frontend_tg.arn
@@ -240,7 +336,7 @@ output "alb_dns_name" {
 
 
 resource "aws_ecs_task_definition" "market_backend" {
-  
+
   family                   = "market_backend_family"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -277,7 +373,7 @@ resource "aws_ecs_task_definition" "market_backend" {
 }
 
 resource "aws_ecs_task_definition" "market_frontend" {
-  
+
   family                   = "market_frontend_family"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -321,8 +417,8 @@ resource "aws_ecs_service" "frontend_service" {
   desired_count   = 2
   launch_type     = "FARGATE"
   network_configuration {
-    subnets         = aws_subnet.public[*].id
-    security_groups = [aws_security_group.allow_web.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.allow_web.id]
     assign_public_ip = true
   }
   load_balancer {
@@ -339,8 +435,8 @@ resource "aws_ecs_service" "backend_service" {
   desired_count   = 2
   launch_type     = "FARGATE"
   network_configuration {
-    subnets         = aws_subnet.public[*].id
-    security_groups = [aws_security_group.allow_web.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.allow_web.id]
     assign_public_ip = true
   }
   load_balancer {
