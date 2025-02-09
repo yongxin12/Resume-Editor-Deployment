@@ -204,7 +204,7 @@ output "ecs_task_execution_role_arn" {
 
 # Create an ECS cluster
 resource "aws_ecs_cluster" "main" {
-  name = "main-cluster"
+  name = "resume-editor-cluster"
 }
 
 
@@ -227,8 +227,8 @@ resource "aws_lb" "production_lb" {
   enable_deletion_protection = false
 }
 
-resource "aws_lb_target_group" "backend_tg" {
-  name        = "backend-tg"
+resource "aws_lb_target_group" "market_backend_tg" {
+  name        = "market-backend-tg"
   port        = 5001
   protocol    = "HTTP"
   vpc_id      = aws_vpc.production_vpc.id
@@ -242,8 +242,8 @@ resource "aws_lb_target_group" "backend_tg" {
   }
 }
 
-resource "aws_lb_target_group" "frontend_tg" {
-  name        = "frontend-tg"
+resource "aws_lb_target_group" "market_frontend_tg" {
+  name        = "market-frontend-tg"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.production_vpc.id
@@ -257,27 +257,79 @@ resource "aws_lb_target_group" "frontend_tg" {
   }
 }
 
+resource "aws_lb_target_group" "editor_backend_tg" {
+  name        = "editor-backend-tg"
+  port        = 5000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.production_vpc.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    port                = 5000
+    healthy_threshold   = 2
+    unhealthy_threshold = 10
+  }
+}
+
+resource "aws_lb_target_group" "editor_frontend_tg" {
+  name        = "editor-frontend-tg"
+  port        = 3001
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.production_vpc.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    port                = 3001
+    healthy_threshold   = 2
+    unhealthy_threshold = 10
+  }
+}
 
 
-resource "aws_lb_listener" "backend_lb_listener" {
+
+resource "aws_lb_listener" "market_backend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
   port              = "5001"
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.backend_tg.arn
+    target_group_arn = aws_lb_target_group.market_backend_tg.arn
   }
 }
 
-resource "aws_lb_listener" "frontend_lb_listener" {
+resource "aws_lb_listener" "market_frontend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
   port              = "3000"
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend_tg.arn
+    target_group_arn = aws_lb_target_group.market_frontend_tg.arn
+  }
+}
+
+resource "aws_lb_listener" "editor_backend_lb_listener" {
+  load_balancer_arn = aws_lb.production_lb.arn
+  port              = "5000"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.editor_backend_tg.arn
+  }
+}
+
+resource "aws_lb_listener" "editor_frontend_lb_listener" {
+  load_balancer_arn = aws_lb.production_lb.arn
+  port              = "3001"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.editor_frontend_tg.arn
   }
 }
 
