@@ -342,7 +342,7 @@ resource "aws_lb_listener" "https_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.backend_tg.arn
+    target_group_arn = aws_lb_target_group.market_backend_tg.arn
   }
 }
 
@@ -362,26 +362,26 @@ resource "aws_lb_listener" "http_redirect" {
   }
 }
 
-resource "aws_lb_listener_rule" "backend_path_rule" {
+resource "aws_lb_listener_rule" "market_backend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 100
+  priority     = 10
 
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = ["/api/job_market/*"]
     }
 
   }
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.backend_tg.arn
+    target_group_arn = aws_lb_target_group.market_backend_tg.arn
   }
 }
 
 resource "aws_lb_listener_rule" "frontend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 200
+  priority     = 190
 
   condition {
     path_pattern {
@@ -391,7 +391,39 @@ resource "aws_lb_listener_rule" "frontend_path_rule" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend_tg.arn
+    target_group_arn = aws_lb_target_group.market_frontend_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "editor_backend_path_rule" {
+  listener_arn = aws_lb_listener.https_listener.arn
+  priority     = 20
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.editor_backend_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "editor_frontend_path_rule" {
+  listener_arn = aws_lb_listener.https_listener.arn
+  priority     = 100
+
+  condition {
+    path_pattern {
+      values = ["/modifier/*"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.editor_frontend_tg.arn
   }
 }
 
