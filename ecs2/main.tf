@@ -83,7 +83,7 @@ resource "aws_security_group" "allow_web" {
   vpc_id      = aws_vpc.production_vpc.id
 
   ingress {
-    description = "Backend port"
+    description = "market-backend port"
     from_port   = 5001
     to_port     = 5001
     protocol    = "tcp"
@@ -91,9 +91,25 @@ resource "aws_security_group" "allow_web" {
   }
 
   ingress {
-    description = "Frontend port"
+    description = "market-frontend port"
     from_port   = 3000
     to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "editor-backend port"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "editor-frontend port"
+    from_port   = 3001
+    to_port     = 3001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
