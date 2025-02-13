@@ -8,7 +8,7 @@ env:
 
 jobs:
   terraform:
-    name: Apply Terraform configuration
+    name: Destroy exsiting resources
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,6 +36,9 @@ jobs:
 
       - name: Initialize Terraform
         run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
 
       - name: Terraform Destroy
         if: github.ref == 'refs/heads/main'

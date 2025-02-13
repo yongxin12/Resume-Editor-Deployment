@@ -1,0 +1,46 @@
+name: ECS Update 
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: "Choose an ECS service to update"
+        required: true
+        default: "market-backend"
+        type: choice
+        options:
+          - market-backend
+          - market-frontend
+          - editor-backend
+          - editor-frontend
+
+
+env:  
+  AWS_REGION: us-east-2
+  ECS_CLUSTER_NAME: resume-editor-cluster
+
+jobs:
+  terraform:
+    name: Update an exsiting service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ecs/
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}  
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  
+          aws-region: ${{ env.AWS_REGION }} 
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Redeploy service
+        run: |
+          aws ecs update-service --cluster ${{ env.ECS_CLUSTER_NAME }} --service ${{ inputs.service_name }} --force-new-deployment > /dev/null 2>&1
+          
+      
