@@ -1,4 +1,4 @@
-name: Construct ECS
+name: ECS Construct
 
 on:
   workflow_dispatch:  

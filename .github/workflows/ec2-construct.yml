@@ -1,4 +1,4 @@
-name: Construct EC2
+name: EC2 Construct
 
 on:
   workflow_dispatch:  
