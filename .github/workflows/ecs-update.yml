@@ -23,11 +23,11 @@ jobs:
   terraform:
     name: Update an exsiting service
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./ecs/
 
     steps:
+      - name: Check Inputs
+        run: echo 'Selected Service:${{ inputs.service_name || 'market-backend' }}'
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -38,6 +38,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: true
 
       - name: Redeploy service
         run: |
