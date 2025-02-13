@@ -176,18 +176,18 @@ act push
 
 
 
-- [ ] 2024/12/20 Create ECR
-- [ ] 2024/12/27 AWS EC2 + Docker Setup (Project 1 frontend + backend)
-- [ ] 2025/01/03 GitHub Repo + Dockerfile + GitHub Actions (push image to ECR)
-- [ ] 2025/01/10 Setup up GitHub Actions workflow files to push Docker images to ECR
-- [ ] 2025/01/17 Pull docker images from ECR and run both frontend and backend in EC2
-- [ ] 2025/01/17 Terraform to trigger ECS
-- [ ] 2025/01/24 EC2 Automation using Terraform
-- [ ] 2025/01/24 Terraform to trigger e2e
-- [ ] 2025/01/24 Load balancer
-- [ ] 2025/01/31 domain (Godaddy, Namecheap)
-- [ ] 2025/02/08 http -> https
-- [ ] 2025/02/08 fully e2e deployment on ECS
+- [x] 2024/12/20 Create ECR
+- [x] 2024/12/27 AWS EC2 + Docker Setup (Project 1 frontend + backend)
+- [x] 2025/01/03 GitHub Repo + Dockerfile + GitHub Actions (push image to ECR)
+- [x] 2025/01/10 Setup up GitHub Actions workflow files to push Docker images to ECR
+- [x] 2025/01/17 Pull docker images from ECR and run both frontend and backend in EC2
+- [x] 2025/01/17 Terraform to trigger ECS
+- [x] 2025/01/24 EC2 Automation using Terraform
+- [x] 2025/01/24 Terraform to trigger e2e
+- [x] 2025/01/24 Load balancer
+- [x] 2025/01/31 domain (Godaddy, Namecheap)
+- [x] 2025/02/08 http -> https
+- [x] 2025/02/08 fully e2e deployment on ECS
 - [ ] 2025/02/15 Redeploy automation
 - [ ] 2025/02/15 integrate Database image
   
