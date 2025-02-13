@@ -8,6 +8,7 @@ on:
         required: true
         default: "market-backend"
         type: choice
+        # -service will be append after choosed option
         options:
           - market-backend
           - market-frontend
@@ -43,6 +44,6 @@ jobs:
 
       - name: Redeploy service
         run: |
-          aws ecs update-service --cluster ${{ env.ECS_CLUSTER_NAME }} --service ${{ inputs.service_name }} --force-new-deployment > /dev/null 2>&1
+          aws ecs update-service --cluster ${{ env.ECS_CLUSTER_NAME }} --service ${{ inputs.service_name }}-service --force-new-deployment > /dev/null 2>&1
           
       

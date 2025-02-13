@@ -622,7 +622,7 @@ resource "aws_ecs_task_definition" "editor_frontend" {
 
 
 resource "aws_ecs_service" "frontend_service" {
-  name            = "frontend-service"
+  name            = "market-frontend-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.market_frontend.arn
   desired_count   = 2
@@ -640,7 +640,7 @@ resource "aws_ecs_service" "frontend_service" {
 }
 
 resource "aws_ecs_service" "backend_service" {
-  name            = "backend-service"
+  name            = "market-backend-service"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.market_backend.arn
   desired_count   = 2
