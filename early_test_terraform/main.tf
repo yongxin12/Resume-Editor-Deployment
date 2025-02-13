@@ -73,7 +73,7 @@ resource "aws_security_group" "allow_ssh" {
 # Generate a key pair
 resource "aws_key_pair" "deployer" {
   key_name   = "deployer-key"
-  public_key = file("${path.module}/id_rsa.pub")
+  public_key = file("${path.module}/id_ed.pub")
 }
 
 # Launch EC2 instance in the default VPC
