@@ -12,7 +12,7 @@ terraform {
 
 # Create a VPC
 resource "aws_vpc" "production_vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr_block
 
   tags = {
     Name = "production-vpc"
@@ -82,53 +82,54 @@ resource "aws_security_group" "allow_web" {
   description = "Allow HTTP inbound traffic"
   vpc_id      = aws_vpc.production_vpc.id
 
+  # 1
   ingress {
-    description = "market-backend port"
-    from_port   = 5001
-    to_port     = 5001
-    protocol    = "tcp"
+    description = var.sg_ingress_description_1
+    from_port   = var.sg_ingress_port_1
+    to_port     = var.sg_ingress_port_1
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
-
+  # 2
   ingress {
-    description = "market-frontend port"
-    from_port   = 3000
-    to_port     = 3000
-    protocol    = "tcp"
+    description = var.sg_ingress_description_2
+    from_port   = var.sg_ingress_port_2
+    to_port     = var.sg_ingress_port_2
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
-
+  # 3
   ingress {
-    description = "editor-backend port"
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
+    description = var.sg_ingress_description_3
+    from_port   = var.sg_ingress_port_3
+    to_port     = var.sg_ingress_port_3
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
-
+  # 4
   ingress {
-    description = "editor-frontend port"
-    from_port   = 3001
-    to_port     = 3001
-    protocol    = "tcp"
+    description = var.sg_ingress_description_4
+    from_port   = var.sg_ingress_port_4
+    to_port     = var.sg_ingress_port_4
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow HTTP
   ingress {
-    description = "Allow HTTP traffic"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    description = var.sg_ingress_description_http
+    from_port   = var.sg_ingress_port_http
+    to_port     = var.sg_ingress_port_http
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   # Allow HTTPS
   ingress {
-    description = "Allow HTTPS traffic"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    description = var.sg_ingress_description_https
+    from_port   = var.sg_ingress_port_https
+    to_port     = var.sg_ingress_port_https
+    protocol    = var.sg_ingress_protocol
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -204,7 +205,7 @@ output "ecs_task_execution_role_arn" {
 
 # Create an ECS cluster
 resource "aws_ecs_cluster" "main" {
-  name = "resume-editor-cluster"
+  name = var.ecs_cluster_name
 }
 
 
@@ -228,60 +229,60 @@ resource "aws_lb" "production_lb" {
 }
 
 resource "aws_lb_target_group" "market_backend_tg" {
-  name        = "market-backend-tg"
-  port        = 5001
-  protocol    = "HTTP"
+  name        = var.lb_target_group_name_1
+  port        = var.lb_target_group_port_1
+  protocol    = var.lb_target_group_protocol
   vpc_id      = aws_vpc.production_vpc.id
-  target_type = "ip"
+  target_type = var.lb_target_group_target_type
 
   health_check {
     path                = "/"
-    port                = 5001
+    port                = var.lb_target_group_port_1
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
 }
 
 resource "aws_lb_target_group" "market_frontend_tg" {
-  name        = "market-frontend-tg"
-  port        = 3000
-  protocol    = "HTTP"
+  name        = var.lb_target_group_name_2
+  port        = var.lb_target_group_port_2
+  protocol    = var.lb_target_group_protocol
   vpc_id      = aws_vpc.production_vpc.id
-  target_type = "ip"
+  target_type = var.lb_target_group_target_type
 
   health_check {
     path                = "/"
-    port                = 3000
+    port                = var.lb_target_group_port_2
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
 }
 
 resource "aws_lb_target_group" "editor_backend_tg" {
-  name        = "editor-backend-tg"
-  port        = 5000
-  protocol    = "HTTP"
+  name        = var.lb_target_group_name_3
+  port        = var.lb_target_group_port_3
+  protocol    = var.lb_target_group_protocol
   vpc_id      = aws_vpc.production_vpc.id
-  target_type = "ip"
+  target_type = var.lb_target_group_target_type
 
   health_check {
     path                = "/"
-    port                = 5000
+    port                = var.lb_target_group_port_3
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
 }
 
 resource "aws_lb_target_group" "editor_frontend_tg" {
-  name        = "editor-frontend-tg"
-  port        = 3001
-  protocol    = "HTTP"
+  name        = var.lb_target_group_name_4
+  port        = var.lb_target_group_port_4
+  protocol    = var.lb_target_group_protocol
   vpc_id      = aws_vpc.production_vpc.id
-  target_type = "ip"
+  target_type = var.lb_target_group_target_type
 
   health_check {
     path                = "/"
-    port                = 3001
+    port                = var.lb_target_group_port_4
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
@@ -291,8 +292,8 @@ resource "aws_lb_target_group" "editor_frontend_tg" {
 
 resource "aws_lb_listener" "market_backend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
-  port              = "5001"
-  protocol          = "HTTP"
+  port              = var.lb_listener_port_1
+  protocol          = var.lb_listener_protocol
 
   default_action {
     type             = "forward"
@@ -302,8 +303,8 @@ resource "aws_lb_listener" "market_backend_lb_listener" {
 
 resource "aws_lb_listener" "market_frontend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
-  port              = "3000"
-  protocol          = "HTTP"
+  port              = var.lb_listener_port_2
+  protocol          = var.lb_listener_protocol
 
   default_action {
     type             = "forward"
@@ -313,8 +314,8 @@ resource "aws_lb_listener" "market_frontend_lb_listener" {
 
 resource "aws_lb_listener" "editor_backend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
-  port              = "5000"
-  protocol          = "HTTP"
+  port              = var.lb_listener_port_3
+  protocol          = var.lb_listener_protocol
 
   default_action {
     type             = "forward"
@@ -324,8 +325,8 @@ resource "aws_lb_listener" "editor_backend_lb_listener" {
 
 resource "aws_lb_listener" "editor_frontend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
-  port              = "3001"
-  protocol          = "HTTP"
+  port              = var.lb_listener_port_4
+  protocol          = var.lb_listener_protocol
 
   default_action {
     type             = "forward"
@@ -364,11 +365,11 @@ resource "aws_lb_listener" "http_redirect" {
 
 resource "aws_lb_listener_rule" "market_backend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 10
+  priority     = var.lb_listener_rule_priority_1
 
   condition {
     path_pattern {
-      values = ["/api/job_market/*"]
+      values = [var.lb_listener_rule_path_1]
     }
 
   }
@@ -381,11 +382,11 @@ resource "aws_lb_listener_rule" "market_backend_path_rule" {
 
 resource "aws_lb_listener_rule" "frontend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 190
+  priority     = var.lb_listener_rule_priority_2
 
   condition {
     path_pattern {
-      values = ["/*"]
+      values = [var.lb_listener_rule_path_2]
     }
   }
 
@@ -397,11 +398,11 @@ resource "aws_lb_listener_rule" "frontend_path_rule" {
 
 resource "aws_lb_listener_rule" "editor_backend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 20
+  priority     = var.lb_listener_rule_priority_3
 
   condition {
     path_pattern {
-      values = ["/api/*"]
+      values = [var.lb_listener_rule_path_3]
     }
   }
 
@@ -413,11 +414,11 @@ resource "aws_lb_listener_rule" "editor_backend_path_rule" {
 
 resource "aws_lb_listener_rule" "editor_frontend_path_rule" {
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 100
+  priority     = var.lb_listener_rule_priority_4
 
   condition {
     path_pattern {
-      values = ["/modifier/*"]
+      values = [var.lb_listener_rule_path_4]
     }
   }
 
@@ -430,9 +431,9 @@ resource "aws_lb_listener_rule" "editor_frontend_path_rule" {
 
 ## route 53
 resource "aws_route53_record" "main_domain" {
-  zone_id = "Z0885993Y0TRG27LPG1N"
-  name    = "aws.mintmelon.ca"
-  type    = "A"
+  zone_id = var.route53_record_zone_id
+  name    = var.route53_record_name
+  type    = var.route53_record_type
 
   alias {
     name                   = aws_lb.production_lb.dns_name
