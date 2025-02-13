@@ -34,6 +34,31 @@ flowchart TD
 
 
 ```
+### ECS Diagram
+
+```mermaid
+flowchart TD
+    
+    E[infrastructure repo] --> |manually|F{github action} --> |apply| G[terraform] --> |construct| I[ECS cluster]
+    G --> |store state| H[S3]
+    G --> |set| K[security groups]
+    G --> |set| J[ALB]
+    G --> |set| O[route 53]
+
+    F --> |trigger| B
+
+    A[service repo] --> |push| B{github action} 
+    A[service repo] --> |manually| B{github action} 
+    
+    B --> |dockerize| C[docker image]
+    B{github action} --> |push built image| D[ECR]
+
+    B ---> |return definitions| F -----> |deploy| M[updated service]
+  
+
+
+```
+
 
 ### some useful commands
 
