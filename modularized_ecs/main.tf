@@ -9,115 +9,368 @@ terraform {
 module "network" {
   source = "./modules/network"
 
-  vpc_cidr            = "10.0.0.0/16"
-  public_subnet_count = 2
-  availability_zones  = data.aws_availability_zones.available.names
-}
+  vpc_cidr_block               = var.vpc_cidr_block
+  sg_ingress_description_http  = var.sg_ingress_description_http
+  sg_ingress_port_http         = var.sg_ingress_port_http
+  sg_ingress_description_https = var.sg_ingress_description_https
+  sg_ingress_port_https        = var.sg_ingress_port_https
+  sg_ingress_protocol          = var.sg_ingress_protocol
+  sg_ingress_description_1     = var.sg_ingress_description_1
+  sg_ingress_port_1            = var.sg_ingress_port_1
+  sg_ingress_port_2            = var.sg_ingress_port_2
+  sg_ingress_port_3            = var.sg_ingress_port_3
+  sg_ingress_port_4            = var.sg_ingress_port_4
+  sg_ingress_description_2     = var.sg_ingress_description_2
+  sg_ingress_description_3     = var.sg_ingress_description_3
+  sg_ingress_description_4     = var.sg_ingress_description_4
 
-module "security" {
-  source = "/modules/security"
 
-  vpc_id = module.network.vpc_id
+  ecs_cluster_name = var.ecs_cluster_name
 }
 
 module "iam" {
   source = "./modules/iam"
-
-  secret_arn = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G"
-}
-
-module "ecs_cluster" {
-  source = "./modules/ecs-cluster"
 }
 
 module "load_balancer" {
-  source = "./modules/load-balancer"
+  source = "./modules/load_balancer"
 
-  vpc_id          = module.network.vpc_id
-  subnets         = module.network.public_subnet_ids
-  security_groups = [module.security.alb_security_group_id]
-  certificate_arn = "arn:aws:acm:us-east-2:376129840507:certificate/f72942a2-9b55-422c-bb66-0cb93407d547"
+  aws_security_group_id = module.network.aws_security_group_id
+  subnet_ids = module.network.subnet_ids[*]
+  vpc_id     = module.network.vpc_id
+
+
+  route53_record_zone_id      = var.route53_record_zone_id
+  route53_record_name         = var.route53_record_name
+  route53_record_type         = var.route53_record_type
+  lb_target_group_protocol    = var.lb_target_group_protocol
+  lb_target_group_target_type = var.lb_target_group_target_type
+  # not shared
+  lb_target_group_name_1 = var.lb_target_group_name_1
+  lb_target_group_port_1 = var.lb_target_group_port_1
+  lb_target_group_name_2 = var.lb_target_group_name_2
+  lb_target_group_port_2 = var.lb_target_group_port_2
+  lb_target_group_name_3 = var.lb_target_group_name_3
+  lb_target_group_port_3 = var.lb_target_group_port_3
+  lb_target_group_name_4 = var.lb_target_group_name_4
+  lb_target_group_port_4 = var.lb_target_group_port_4
+
+  lb_listener_protocol = var.lb_listener_protocol
+  lb_listener_port_1   = var.lb_listener_port_1
+  lb_listener_port_2   = var.lb_listener_port_2
+  lb_listener_port_3   = var.lb_listener_port_3
+  lb_listener_port_4   = var.lb_listener_port_4
+
+  lb_listener_rule_path_1     = var.lb_listener_rule_path_1
+  lb_listener_rule_priority_1 = var.lb_listener_rule_priority_1
+  lb_listener_rule_path_2     = var.lb_listener_rule_path_2
+  lb_listener_rule_priority_2 = var.lb_listener_rule_priority_2
+  lb_listener_rule_path_3     = var.lb_listener_rule_path_3
+  lb_listener_rule_priority_3 = var.lb_listener_rule_priority_3
+  lb_listener_rule_path_4     = var.lb_listener_rule_path_4
+  lb_listener_rule_priority_4 = var.lb_listener_rule_priority_4
+
 }
 
-module "route53" {
-  source = "./modules/route53"
 
-  lb_dns_name = module.load_balancer.alb_dns_name
-  lb_zone_id  = module.load_balancer.alb_zone_id
-  zone_id     = "Z0885993Y0TRG27LPG1N"
-  domain_name = "aws.mintmelon.ca"
-}
+# resource "aws_ecs_task_definition" "market_backend" {
 
-module "market_backend" {
-  source = "./modules/ecs-service"
+#   family                   = "market_backend_family"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = 256
+#   memory                   = 512
+#   execution_role_arn       = module.iam.ecs_task_execution_role_arn
 
-  service_name         = "market-backend"
-  cluster_id           = module.ecs_cluster.cluster_id
-  task_cpu             = 256
-  task_memory          = 512
-  container_port       = 5001
-  container_image      = "376129840507.dkr.ecr.us-east-2.amazonaws.com/market-backend:latest"
-  execution_role_arn   = module.iam.ecs_task_execution_role_arn
-  target_group_arn     = module.load_balancer.market_backend_tg_arn
-  security_groups      = [module.security.alb_security_group_id]
-  subnets              = module.network.public_subnet_ids
-  log_group            = "/ecs/market_backend"
-}
+#   container_definitions = jsonencode([
+#     {
+#       name      = "market_backend"
+#       image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/market-backend:latest"
+#       cpu       = 256
+#       essential = true
 
-module "market_frontend" {
-  source = "./modules/ecs-service"
+#       portMappings = [
+#         {
+#           containerPort = 5001
+#           hostPort      = 5001
+#           protocol      = "tcp"
+#         }
+#       ]
 
-  service_name         = "market-frontend"
-  cluster_id           = module.ecs_cluster.cluster_id
-  task_cpu             = 256
-  task_memory          = 512
-  container_port       = 3000
-  container_image      = "376129840507.dkr.ecr.us-east-2.amazonaws.com/market-frontend:latest"
-  execution_role_arn   = module.iam.ecs_task_execution_role_arn
-  target_group_arn     = module.load_balancer.market_frontend_tg_arn
-  security_groups      = [module.security.alb_security_group_id]
-  subnets              = module.network.public_subnet_ids
-  log_group            = "/ecs/market_frontend"
-}
+#       logConfiguration = {
+#         logDriver = "awslogs"
+#         options = {
+#           "awslogs-group"         = "/ecs/market_backend"
+#           "awslogs-region"        = "us-east-2"
+#           "max-buffer-size"       = "25m"
+#           "awslogs-stream-prefix" = "ecs"
+#         }
+#       }
+#     }
+#   ])
+# }
 
-module "editor_backend" {
-  source = "./modules/ecs-service"
+# resource "aws_ecs_task_definition" "market_frontend" {
 
-  service_name         = "editor-backend"
-  cluster_id           = module.ecs_cluster.cluster_id
-  task_cpu             = 256
-  task_memory          = 512
-  container_port       = 5001
-  container_image      = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-backend:latest"
-  execution_role_arn   = module.iam.ecs_task_execution_role_arn
-  target_group_arn     = module.load_balancer.editor_backend_tg_arn
-  security_groups      = [module.security.alb_security_group_id]
-  subnets              = module.network.public_subnet_ids
-  log_group            = "/ecs/editor_backend"
-  secrets = [
+#   family                   = "market_frontend_family"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = 256
+#   memory                   = 512
+#   execution_role_arn       = module.iam.ecs_task_execution_role_arn
+
+#   container_definitions = jsonencode([
+#     {
+#       name      = "market_frontend"
+#       image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/market-frontend:latest"
+#       cpu       = 256
+#       essential = true
+
+#       portMappings = [
+#         {
+#           containerPort = 3000
+#           hostPort      = 3000
+#           protocol      = "tcp"
+#         }
+#       ]
+
+#       logConfiguration = {
+#         logDriver = "awslogs"
+#         options = {
+#           "awslogs-group"         = "/ecs/market_frontend"
+#           "awslogs-region"        = "us-east-2"
+#           "max-buffer-size"       = "25m"
+#           "awslogs-stream-prefix" = "ecs"
+#         }
+#       }
+#     }
+#   ])
+# }
+
+resource "aws_ecs_task_definition" "editor_backend" {
+
+  family                   = "editor_backend_family"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 512
+  memory                   = 1024
+  execution_role_arn       = module.iam.ecs_task_execution_role_arn
+
+  container_definitions = jsonencode([
     {
-      name      = "OPENAI_API_KEY"
-      valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G:OPENAI_API_KEY::"
+      name      = "editor_backend"
+      image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-backend:latest"
+      cpu       = 256
+      memory    = 512
+      essential = true
+
+      portMappings = [
+        {
+          containerPort = 5001
+          hostPort      = 5001
+          protocol      = "tcp"
+        }
+      ]
+      # hardcoding arn
+      # plain text
+      # secrets = [
+      #   {
+      #     name      = "OPENAI_API_KEY"
+      #     valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G"
+      #   }
+      # ]
+      environment = [
+        {
+          name  = "DATABASE_URL"
+          value = "postgresql://postgres:postgres@127.0.0.1:5432/resume_app"
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "OPENAI_API_KEY"
+          valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G:OPENAI_API_KEY::"
+        }
+      ]
+
+      dependsOn = [
+        {
+          containerName = "db"
+          condition     = "START"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/editor_backend"
+          "awslogs-region"        = "us-east-2"
+          "max-buffer-size"       = "25m"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    },
+    # db container
+    {
+      name      = "db"
+      image     = "postgres:15"
+      cpu       = 256
+      memory    = 512
+      essential = true # ??
+
+      environment = [
+        {
+          name  = "POSTGRES_USER"
+          value = "postgres"
+        },
+        {
+          name  = "POSTGRES_PASSWORD"
+          value = "postgres"
+        },
+        {
+          name  = "POSTGRES_DB"
+          value = "resume_app"
+        }
+      ]
+
+      portMappings = [
+        {
+          containerPort = 5432
+          protocol      = "tcp"
+        }
+      ]
+
+      # mountPoints = [
+      #   {
+      #     sourceVolume  = "postgres_data"
+      #     containerPath = "/var/lib/postgresql/data"
+      #   }
+      # ]
     }
-  ]
+  ])
+  # volume {
+  #   name = "postgres_data"
+
+  #   efs_volume_configuration {
+  #     file_system_id     = aws_efs_file_system.postgres_efs.id
+  #     transit_encryption = "ENABLED"
+  #   }
+  # }
 }
 
-module "editor_frontend" {
-  source = "./modules/ecs-service"
+# resource "aws_ecs_task_definition" "editor_frontend" {
 
-  service_name         = "editor-frontend"
-  cluster_id           = module.ecs_cluster.cluster_id
-  task_cpu             = 256
-  task_memory          = 512
-  container_port       = 80
-  container_image      = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-frontend:latest"
-  execution_role_arn   = module.iam.ecs_task_execution_role_arn
-  target_group_arn     = module.load_balancer.editor_frontend_tg_arn
-  security_groups      = [module.security.alb_security_group_id]
-  subnets              = module.network.public_subnet_ids
-  log_group            = "/ecs/editor_frontend"
+#   family                   = "editor_frontend_family"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = 256
+#   memory                   = 512
+#   execution_role_arn       = module.iam.ecs_task_execution_role_arn
+
+#   container_definitions = jsonencode([
+#     {
+#       name      = "editor_frontend"
+#       image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-frontend:latest"
+#       cpu       = 256
+#       essential = true
+
+#       portMappings = [
+#         {
+#           containerPort = 80
+#           hostPort      = 80
+#           protocol      = "tcp"
+#         }
+#       ]
+
+#       logConfiguration = {
+#         logDriver = "awslogs"
+#         options = {
+#           "awslogs-group"         = "/ecs/editor_frontend"
+#           "awslogs-region"        = "us-east-2"
+#           "max-buffer-size"       = "25m"
+#           "awslogs-stream-prefix" = "ecs"
+#         }
+#       }
+#     }
+#   ])
+# }
+
+
+# resource "aws_ecs_service" "frontend_service" {
+#   name            = "market-frontend-service"
+#   cluster         = module.network.aws_ecs_cluster_main_id
+#   task_definition = aws_ecs_task_definition.market_frontend.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#   network_configuration {
+#     subnets          = module.network.subnet_ids
+#     security_groups  = [module.network.aws_security_group_id]
+#     assign_public_ip = true
+#   }
+#   load_balancer {
+#     target_group_arn = module.load_balancer.market_frontend_tg_arn
+#     container_name   = "market_frontend"
+#     container_port   = 3000
+#   }
+# }
+
+# resource "aws_ecs_service" "backend_service" {
+#   name            = "market-backend-service"
+#   cluster         = module.network.aws_ecs_cluster_main_id
+#   task_definition = aws_ecs_task_definition.market_backend.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#   network_configuration {
+#     subnets          = module.network.subnet_ids
+#     security_groups  = [module.network.aws_security_group_id]
+#     assign_public_ip = true
+#   }
+#   load_balancer {
+#     target_group_arn = module.load_balancer.market_backend_tg_arn
+#     container_name   = "market_backend"
+#     container_port   = 5001
+#   }
+# }
+
+
+# resource "aws_ecs_service" "editor_frontend_service" {
+#   name            = "editor-frontend-service"
+#   cluster         = module.network.aws_ecs_cluster_main_id
+#   task_definition = aws_ecs_task_definition.editor_frontend.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#   network_configuration {
+#     subnets          = module.network.subnet_ids
+#     security_groups  = [aws_security_group.allow_web.id]
+#     assign_public_ip = true
+#   }
+#   load_balancer {
+#     target_group_arn = module.load_balancer.editor_frontend_tg
+#     container_name   = "editor_frontend"
+#     container_port   = 80
+#   }
+# }
+
+
+resource "aws_ecs_service" "editor_backend_service" {
+  name            = "editor-backend-service"
+  cluster         = module.network.aws_ecs_cluster_main_id
+  task_definition = aws_ecs_task_definition.editor_backend.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = module.network.subnet_ids
+    security_groups  = [module.network.aws_security_group_id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = module.load_balancer.editor_backend_tg_arn
+    container_name   = "editor_backend"
+    container_port   = 5001
+  }
 }
 
-data "aws_availability_zones" "available" {
-  state = "available"
-}
+
+
