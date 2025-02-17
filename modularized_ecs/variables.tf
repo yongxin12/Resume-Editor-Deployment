@@ -92,3 +92,27 @@ variable "lb_listener_rules" {
 variable "route53_record_zone_id" {}
 variable "route53_record_name" {}
 variable "route53_record_type" {}
+
+
+# task definitions
+variable "image_base_url" {}
+# variable "task_definitions" {
+#   description = "List of task definitions"
+#   type = list(object({
+#     name_u = string
+#     name_h = string
+#     cpu = number
+#     memory = number
+#     port = number
+#     protocol = string
+#     environment   = optional(list(object({
+#       name  = string
+#       value = string
+#     })), []) # Default to an empty list if not provided
+
+#     secrets = optional(list(object({
+#       name      = string
+#       valueFrom = string
+#     })), []) # Default to an empty list if not provided
+#   }))
+# }
