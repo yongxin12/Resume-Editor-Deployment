@@ -147,117 +147,6 @@ module "load_balancer" {
 #   ])
 # }
 
-resource "aws_ecs_task_definition" "editor_backend" {
-
-  family                   = "editor_backend_family"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
-  execution_role_arn       = module.iam.ecs_task_execution_role_arn
-
-  container_definitions = jsonencode([
-    {
-      name      = "editor_backend"
-      image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-backend:latest"
-      cpu       = 256
-      memory    = 512
-      essential = true
-
-      portMappings = [
-        {
-          containerPort = 5001
-          hostPort      = 5001
-          protocol      = "tcp"
-        }
-      ]
-      # hardcoding arn
-      # plain text
-      # secrets = [
-      #   {
-      #     name      = "OPENAI_API_KEY"
-      #     valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G"
-      #   }
-      # ]
-      environment = [
-        {
-          name  = "DATABASE_URL"
-          value = "postgresql://postgres:postgres@127.0.0.1:5432/resume_app"
-        }
-      ]
-
-      secrets = [
-        {
-          name      = "OPENAI_API_KEY"
-          valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G:OPENAI_API_KEY::"
-        }
-      ]
-
-      dependsOn = [
-        {
-          containerName = "db"
-          condition     = "START"
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = "/ecs/editor_backend"
-          "awslogs-region"        = "us-east-2"
-          "max-buffer-size"       = "25m"
-          "awslogs-stream-prefix" = "ecs"
-        }
-      }
-    },
-    # db container
-    {
-      name      = "db"
-      image     = "postgres:15"
-      cpu       = 256
-      memory    = 512
-      essential = true # ??
-
-      environment = [
-        {
-          name  = "POSTGRES_USER"
-          value = "postgres"
-        },
-        {
-          name  = "POSTGRES_PASSWORD"
-          value = "postgres"
-        },
-        {
-          name  = "POSTGRES_DB"
-          value = "resume_app"
-        }
-      ]
-
-      portMappings = [
-        {
-          containerPort = 5432
-          protocol      = "tcp"
-        }
-      ]
-
-      # mountPoints = [
-      #   {
-      #     sourceVolume  = "postgres_data"
-      #     containerPath = "/var/lib/postgresql/data"
-      #   }
-      # ]
-    }
-  ])
-  # volume {
-  #   name = "postgres_data"
-
-  #   efs_volume_configuration {
-  #     file_system_id     = aws_efs_file_system.postgres_efs.id
-  #     transit_encryption = "ENABLED"
-  #   }
-  # }
-}
-
 # resource "aws_ecs_task_definition" "editor_frontend" {
 
 #   family                   = "editor_frontend_family"
@@ -352,6 +241,72 @@ resource "aws_ecs_task_definition" "editor_backend" {
 # }
 
 
+
+resource "aws_ecs_task_definition" "editor_backend" {
+
+  family                   = "editor_backend_family"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = module.iam.ecs_task_execution_role_arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "editor_backend"
+      image     = "376129840507.dkr.ecr.us-east-2.amazonaws.com/editor-backend:latest"
+      cpu       = 256
+      memory    = 512
+      essential = true
+
+      portMappings = [
+        {
+          containerPort = 5001
+          hostPort      = 5001
+          protocol      = "tcp"
+        }
+      ]
+      # hardcoding arn
+      # plain text
+      # secrets = [
+      #   {
+      #     name      = "OPENAI_API_KEY"
+      #     valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G"
+      #   }
+      # ]
+      environment = [
+        {
+          name  = "DATABASE_URL"
+          value = "postgresql://${module.network.postgres_username}:postgres@${module.network.aws_db_instance_postgres_endpoint}/${module.network.aws_db_instance_postgres_db_name}"
+        },
+        {
+          name  = "DB_HOST",
+            value = "${module.network.aws_db_instance_postgres_endpoint}"
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "OPENAI_API_KEY"
+          valueFrom = "arn:aws:secretsmanager:us-east-2:376129840507:secret:OPENAI_API_KEY-irAH0G:OPENAI_API_KEY::"
+        }
+      ]
+
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/editor_backend"
+          "awslogs-region"        = "us-east-2"
+          "max-buffer-size"       = "25m"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+
+  ])
+}
+
 resource "aws_ecs_service" "editor_backend_service" {
   name            = "editor-backend-service"
   cluster         = module.network.aws_ecs_cluster_main_id
@@ -372,5 +327,7 @@ resource "aws_ecs_service" "editor_backend_service" {
   }
 }
 
-
+output "aws_db_instance_postgres_endpoint" {
+  value = module.network.aws_db_instance_postgres_endpoint
+}
 

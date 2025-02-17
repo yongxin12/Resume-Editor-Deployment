@@ -13,3 +13,15 @@ output "vpc_id" {
 output "aws_ecs_cluster_main_id" {
   value = aws_ecs_cluster.main.id
 }
+
+output "postgres_username" {
+  value = aws_db_instance.postgres.username
+}
+
+output "aws_db_instance_postgres_endpoint" {
+  value = aws_db_instance.postgres.address
+}
+
+output "aws_db_instance_postgres_db_name" {
+  value = aws_db_instance.postgres.db_name
+}
