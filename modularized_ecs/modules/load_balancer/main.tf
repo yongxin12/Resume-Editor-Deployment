@@ -12,111 +12,37 @@ resource "aws_lb" "production_lb" {
   enable_deletion_protection = false
 }
 
-resource "aws_lb_target_group" "market_backend_tg" {
-  name        = var.lb_target_group_name_1
-  port        = var.lb_target_group_port_1
-  protocol    = var.lb_target_group_protocol
+
+resource "aws_lb_target_group" "target_groups" {
+  for_each = { for tg in var.lb_target_groups : tg.name => tg }
+
+  name        = each.value.name
+  port        = each.value.port
+  protocol    = each.value.protocol
   vpc_id      = var.vpc_id
-  target_type = var.lb_target_group_target_type
+  target_type = each.value.type
 
   health_check {
     path                = "/"
-    port                = var.lb_target_group_port_1
+    port                = each.value.port
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
 }
 
-resource "aws_lb_target_group" "market_frontend_tg" {
-  name        = var.lb_target_group_name_2
-  port        = var.lb_target_group_port_2
-  protocol    = var.lb_target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.lb_target_group_target_type
+resource "aws_lb_listener" "lb_listeners" {
+  for_each = { for listener in var.lb_listeners : listener.name => listener }
 
-  health_check {
-    path                = "/"
-    port                = var.lb_target_group_port_2
-    healthy_threshold   = 2
-    unhealthy_threshold = 10
-  }
-}
-
-resource "aws_lb_target_group" "editor_backend_tg" {
-  name        = var.lb_target_group_name_3
-  port        = var.lb_target_group_port_3
-  protocol    = var.lb_target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.lb_target_group_target_type
-
-  health_check {
-    path                = "/"
-    port                = var.lb_target_group_port_3
-    healthy_threshold   = 2
-    unhealthy_threshold = 10
-  }
-}
-
-resource "aws_lb_target_group" "editor_frontend_tg" {
-  name        = var.lb_target_group_name_4
-  port        = var.lb_target_group_port_4
-  protocol    = var.lb_target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.lb_target_group_target_type
-
-  health_check {
-    path                = "/"
-    port                = var.lb_target_group_port_4
-    healthy_threshold   = 2
-    unhealthy_threshold = 10
-  }
-}
-
-
-
-resource "aws_lb_listener" "market_backend_lb_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
-  port              = var.lb_listener_port_1
-  protocol          = var.lb_listener_protocol
+  port = each.value.port
+  protocol = each.value.protocol
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.market_backend_tg.arn
+    type = "forward"
+    target_group_arn = aws_lb_target_group.target_groups[each.value.lb_target_group_name].arn
   }
 }
 
-resource "aws_lb_listener" "market_frontend_lb_listener" {
-  load_balancer_arn = aws_lb.production_lb.arn
-  port              = var.lb_listener_port_2
-  protocol          = var.lb_listener_protocol
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.market_frontend_tg.arn
-  }
-}
-
-resource "aws_lb_listener" "editor_backend_lb_listener" {
-  load_balancer_arn = aws_lb.production_lb.arn
-  port              = var.lb_listener_port_3
-  protocol          = var.lb_listener_protocol
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.editor_backend_tg.arn
-  }
-}
-
-resource "aws_lb_listener" "editor_frontend_lb_listener" {
-  load_balancer_arn = aws_lb.production_lb.arn
-  port              = var.lb_listener_port_4
-  protocol          = var.lb_listener_protocol
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.editor_frontend_tg.arn
-  }
-}
 
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = aws_lb.production_lb.arn
@@ -127,10 +53,9 @@ resource "aws_lb_listener" "https_listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.market_backend_tg.arn
+    target_group_arn = aws_lb_target_group.target_groups["market-backend-tg"].arn
   }
 }
-
 
 resource "aws_lb_listener" "http_redirect" {
   load_balancer_arn = aws_lb.production_lb.arn
@@ -147,70 +72,24 @@ resource "aws_lb_listener" "http_redirect" {
   }
 }
 
-resource "aws_lb_listener_rule" "market_backend_path_rule" {
+
+resource "aws_lb_listener_rule" "lb_listener_rules" {
+  for_each = { for rule in var.lb_listener_rules : rule.name => rule }
+
   listener_arn = aws_lb_listener.https_listener.arn
-  priority     = var.lb_listener_rule_priority_1
+  priority = each.value.priority
 
   condition {
     path_pattern {
-      values = [var.lb_listener_rule_path_1]
+      values = [each.value.path]
     }
-
   }
-
   action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.market_backend_tg.arn
+    type = "forward"
+    target_group_arn = aws_lb_target_group.target_groups[each.value.lb_target_group_name].arn
   }
 }
 
-resource "aws_lb_listener_rule" "frontend_path_rule" {
-  listener_arn = aws_lb_listener.https_listener.arn
-  priority     = var.lb_listener_rule_priority_2
-
-  condition {
-    path_pattern {
-      values = [var.lb_listener_rule_path_2]
-    }
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.market_frontend_tg.arn
-  }
-}
-
-resource "aws_lb_listener_rule" "editor_backend_path_rule" {
-  listener_arn = aws_lb_listener.https_listener.arn
-  priority     = var.lb_listener_rule_priority_3
-
-  condition {
-    path_pattern {
-      values = [var.lb_listener_rule_path_3]
-    }
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.editor_backend_tg.arn
-  }
-}
-
-resource "aws_lb_listener_rule" "editor_frontend_path_rule" {
-  listener_arn = aws_lb_listener.https_listener.arn
-  priority     = var.lb_listener_rule_priority_4
-
-  condition {
-    path_pattern {
-      values = [var.lb_listener_rule_path_4]
-    }
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.editor_frontend_tg.arn
-  }
-}
 
 ## route 53
 resource "aws_route53_record" "main_domain" {
