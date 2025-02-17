@@ -63,66 +63,16 @@ resource "aws_security_group" "allow_web" {
   description = "Allow HTTP inbound traffic"
   vpc_id      = aws_vpc.production_vpc.id
 
-  # 1
-  ingress {
-    description = var.sg_ingress_description_1
-    from_port   = var.sg_ingress_port_1
-    to_port     = var.sg_ingress_port_1
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  # 2
-  ingress {
-    description = var.sg_ingress_description_2
-    from_port   = var.sg_ingress_port_2
-    to_port     = var.sg_ingress_port_2
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  # 3
-  ingress {
-    description = var.sg_ingress_description_3
-    from_port   = var.sg_ingress_port_3
-    to_port     = var.sg_ingress_port_3
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  # 4
-  ingress {
-    description = var.sg_ingress_description_4
-    from_port   = var.sg_ingress_port_4
-    to_port     = var.sg_ingress_port_4
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Allow NFS traffic
-  ingress {
-    description = "Allow NFS traffic"
-    from_port   = 2049 # NFS requires this
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"] # Allow traffic from within the VPC
-  }
-
-
-
-  # Allow HTTP
-  ingress {
-    description = var.sg_ingress_description_http
-    from_port   = var.sg_ingress_port_http
-    to_port     = var.sg_ingress_port_http
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Allow HTTPS
-  ingress {
-    description = var.sg_ingress_description_https
-    from_port   = var.sg_ingress_port_https
-    to_port     = var.sg_ingress_port_https
-    protocol    = var.sg_ingress_protocol
-    cidr_blocks = ["0.0.0.0/0"]
+  # Dynamic ingress rules
+  dynamic "ingress" {
+    for_each = var.sg_ingress_rules
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.port
+      to_port     = ingress.value.port
+      protocol    = ingress.value.protocol
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -141,10 +91,10 @@ resource "aws_security_group" "rds_sg" {
   vpc_id      = aws_vpc.production_vpc.id
 
   ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # For testing only
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # For testing only
     # security_groups = [aws_security_group.allow_web.id]
   }
 

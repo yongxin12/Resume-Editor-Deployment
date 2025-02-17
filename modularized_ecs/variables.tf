@@ -1,19 +1,16 @@
 # variables.tf
 # Input variables
-variable s3_region {}
-variable s3_bucket {}
-variable s3_key {}
 variable vpc_cidr_block {}
 
-# # Security group variables
-# variable "sg_ingress_rules" {
-#   description = "List of security group ingress rules"
-#   type = list(object({
-#     description = string
-#     port        = number
-#     protocol    = string
-#   }))
-# }
+# Security group variables
+variable "sg_ingress_rules" {
+  description = "List of security group ingress rules"
+  type = list(object({
+    description = string
+    port        = number
+    protocol    = string
+  }))
+}
 
 variable sg_ingress_description_http {}
 variable sg_ingress_port_http {}

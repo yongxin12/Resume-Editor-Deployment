@@ -6,25 +6,15 @@ terraform {
   }
 }
 
+module "iam" {
+  source = "./modules/iam"
+}
+
 module "network" {
   source = "./modules/network"
 
-  vpc_cidr_block               = var.vpc_cidr_block
-  sg_ingress_description_http  = var.sg_ingress_description_http
-  sg_ingress_port_http         = var.sg_ingress_port_http
-  sg_ingress_description_https = var.sg_ingress_description_https
-  sg_ingress_port_https        = var.sg_ingress_port_https
-  sg_ingress_protocol          = var.sg_ingress_protocol
-  sg_ingress_description_1     = var.sg_ingress_description_1
-  sg_ingress_port_1            = var.sg_ingress_port_1
-  sg_ingress_port_2            = var.sg_ingress_port_2
-  sg_ingress_port_3            = var.sg_ingress_port_3
-  sg_ingress_port_4            = var.sg_ingress_port_4
-  sg_ingress_description_2     = var.sg_ingress_description_2
-  sg_ingress_description_3     = var.sg_ingress_description_3
-  sg_ingress_description_4     = var.sg_ingress_description_4
-
-
+  vpc_cidr_block   = var.vpc_cidr_block
+  sg_ingress_rules = var.sg_ingress_rules
   ecs_cluster_name = var.ecs_cluster_name
 }
 
