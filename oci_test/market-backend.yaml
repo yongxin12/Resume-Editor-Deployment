@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-backend
+spec:
+  selector:
+    matchLabels:
+      app: market-backend
+  template:
+    metadata:
+      labels:
+        app: market-backend
+    spec:
+      containers:
+        - name: market-backend
+          image: yyz.ocir.io/yztdqx0npeqw/market-backend:latest
+          ports:
+            - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-backend-service
+spec:
+  selector:
+    app: market-backend
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: LoadBalancer 

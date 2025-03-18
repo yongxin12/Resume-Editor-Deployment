@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: market-frontend
+spec:
+  selector:
+    matchLabels:
+      app: market-frontend
+  template:
+    metadata:
+      labels:
+        app: market-frontend
+    spec:
+      containers:
+        - name: market-frontend
+          image: yyz.ocir.io/yztdqx0npeqw/market-frontend:latest
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: market-frontend-service
+spec:
+  selector:
+    app: market-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer # Internal service for frontend to call

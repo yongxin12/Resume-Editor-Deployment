@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: editor-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: editor-backend
+  template:
+    metadata:
+      labels:
+        app: editor-backend
+    spec:
+      containers:
+        - name: editor-backend
+          image: yyz.ocir.io/yztdqx0npeqw/editor-backend:latest
+          ports:
+            - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: editor-backend-service
+spec:
+  selector:
+    app: editor-backend
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: LoadBalancer # Internal service for frontend to call
