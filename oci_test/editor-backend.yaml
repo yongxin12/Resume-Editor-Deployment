@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: editor-backend
+  namespace: resume-app
 spec:
   replicas: 1
   selector:
@@ -17,11 +18,39 @@ spec:
           image: yyz.ocir.io/yztdqx0npeqw/editor-backend:latest
           ports:
             - containerPort: 5001
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: database-url
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 15
+            periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: editor-backend-service
+  namespace: resume-app
+  annotations:
+    service.beta.kubernetes.io/oci-load-balancer-shape: "10Mbps"
 spec:
   selector:
     app: editor-backend
@@ -29,4 +58,4 @@ spec:
     - protocol: TCP
       port: 5001
       targetPort: 5001
-  type: LoadBalancer # Internal service for frontend to call
+  type: ClusterIP

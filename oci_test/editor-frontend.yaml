@@ -2,7 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: editor-frontend
+  namespace: resume-app
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: editor-frontend
@@ -11,16 +13,49 @@ spec:
       labels:
         app: editor-frontend
     spec:
+      # Node affinity to ensure frontend runs on specific node
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - 10.0.10.20
       containers:
         - name: editor-frontend
           image: yyz.ocir.io/yztdqx0npeqw/editor-frontend:latest
           ports:
-            - containerPort: 3001
+            - containerPort: 3000
+          env:
+            - name: REACT_APP_BACKEND_URL
+              value: "/api/modifier"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: editor-frontend-service
+  namespace: resume-app
   annotations:
     service.beta.kubernetes.io/oci-load-balancer-shape: "10Mbps"
 spec:
@@ -29,5 +64,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 3001
-  type: LoadBalancer # Internal service for frontend to call
+      targetPort: 3000
+  type: ClusterIP
