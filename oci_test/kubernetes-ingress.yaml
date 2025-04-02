@@ -5,22 +5,31 @@ metadata:
   namespace: resume-app
   annotations:
     kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/rule-type: "PathPrefix"
+    traefik.ingress.kubernetes.io/rewrite-target: "/"
 spec:
   rules:
   - host: oci.mintmelon.ca
     http:
       paths:
-      - path: /
+      - path: /api/job_market
         pathType: Prefix
         backend:
           service:
-            name: market-frontend-service
+            name: market-backend-service
             port:
-              number: 80
+              number: 5001
       - path: /modifier
         pathType: Prefix
         backend:
           service:
             name: editor-frontend-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: market-frontend-service
             port:
               number: 80 

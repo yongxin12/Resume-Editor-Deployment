@@ -31,18 +31,20 @@ spec:
             limits:
               cpu: "1000m"
               memory: "1Gi"
+          # Using the root path as a readiness check since /health doesn't exist
           readinessProbe:
             httpGet:
-              path: /health
+              path: /
               port: 5001
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          # Using the root path as a liveness check since /health doesn't exist
           livenessProbe:
             httpGet:
-              path: /health
+              path: /
               port: 5001
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            initialDelaySeconds: 20
+            periodSeconds: 60
 ---
 apiVersion: v1
 kind: Service
