@@ -1,0 +1,55 @@
+controller:
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: true
+  
+  # Configure the controller service (load balancer)
+  service:
+    type: LoadBalancer
+    # Set annotations based on your cloud provider
+    annotations:
+          # For OCI, you might want to add specific OCI annotations
+      # For example: oci.oraclecloud.com/private-load-balancer: "true"
+      # OCI-specific annotations for bandwidth limits
+      oci.oraclecloud.com/load-balancer-type: "flexible"
+      oci.oraclecloud.com/shape-min-bandwidth-mbps: "10"
+      oci.oraclecloud.com/shape-max-bandwidth-mbps: "10"
+    externalTrafficPolicy: Local
+    
+    # Ports configuration
+    ports:
+      http: 80
+      https: 443
+    
+    # Enable TLS
+    enableHttp: true 
+    enableHttps: true
+    
+  # Configure SSL to terminate at ingress controller
+  config:
+    use-forwarded-headers: "true"
+    ssl-redirect: "false"
+    force-ssl-redirect: "false"
+    proxy-real-ip-cidr: "0.0.0.0/0"
+    use-proxy-protocol: "false"
+    http-snippet: |
+      map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+      }
+  
+  # Configure to watch all namespaces
+  watchIngressWithoutClass: true
+  scope:
+    enabled: false  # This allows watching all namespaces
+    
+  # Configure ingress class defaults
+  admissionWebhooks:
+    enabled: true
+    
+# Metrics for monitoring
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false 

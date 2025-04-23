@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: resume-app-ingress
+  annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts: 
+    - resume.mintmelon.ca
+    secretName: resume-app-tls
+  rules:
+  - host: resume.mintmelon.ca
+    http:
+      paths:
+      Route to market backend API
+      - path: /api/job_market
+        pathType: Prefix
+        backend:
+          service:
+            name: market-backend-service
+            port:
+              number: 5001
+              
+      # # Route to editor backend API
+      # - path: /api/modifier
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: editor-backend-service
+      #       port:
+      #         number: 5001
+              
+      # # Route to editor frontend
+      # - path: /modifier
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: editor-frontend-service
+      #       port:
+      #         number: 80
+              
+      # Default route to market frontend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: market-frontend-service
+            port:
+              number: 80 

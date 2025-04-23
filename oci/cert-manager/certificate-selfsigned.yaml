@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: resume-app-selfsigned
+  namespace: resume-app
+spec:
+  dnsNames:
+    - resume.mintmelon.ca
+  secretName: resume-app-tls
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer 

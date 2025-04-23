@@ -1,0 +1,56 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: market-frontend-route
+  namespace: resume-app
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`oci.mintmelon.ca`) && PathPrefix(`/api/job_market`)
+      kind: Rule
+      priority: 30
+      middlewares:
+        - name: cors-headers
+      services:
+        - name: market-backend-service
+          port: 5001
+    - match: Host(`oci.mintmelon.ca`) && PathPrefix(`/api`)
+      kind: Rule
+      priority: 20
+      middlewares:
+        - name: cors-headers
+      services:
+        - name: editor-backend-service
+          port: 5001
+    - match: Host(`oci.mintmelon.ca`) && PathPrefix(`/modifier`)
+      kind: Rule
+      priority: 10
+      services:
+        - name: editor-frontend-service
+          port: 80
+    - match: Host(`oci.mintmelon.ca`)
+      kind: Rule
+      priority: 1
+      services:
+        - name: market-frontend-service
+          port: 80
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-headers
+  namespace: resume-app
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    accessControlAllowOriginList:
+      - https://oci.mintmelon.ca
+    accessControlAllowCredentials: true
+    accessControlMaxAge: 100
+    addVaryHeader: true 
